@@ -1,35 +1,42 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import './App.css'; // Ensure CSS is imported
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './Home';
+import AdminLogin from './AdminLogin';
+import './App.css'; 
 
-function Home() {
-  const pdfUrl = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
+function App() {
+  // Global State for the PDF Repository
+  const [pdfs, setPdfs] = useState([
+    { 
+      id: 1, 
+      name: 'Default Dummy PDF.pdf', 
+      url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' 
+    }
+  ]);
+  
+  // State for which PDF is currently displayed on the Home page
+  const [activePdfUrl, setActivePdfUrl] = useState(pdfs[0].url);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      
-      {/* Header section styled with App.css classes */}
-      <div className="page-header">
-        <h1>Welcome to Our Website <span className="heart">&hearts;</span></h1>
-        <p className="small">Optimized for unclassified mission support information.</p>
-        <Link to="/admin" className="app-link">
-          Admin Login &rarr;
-        </Link>
+    <Router>
+      <div className="App">
+        <Routes>
+          {/* Pass the active URL to the Home page */}
+          <Route path="/" element={<Home activePdfUrl={activePdfUrl} />} />
+          
+          {/* Pass the repository management functions to the Admin page */}
+          <Route path="/admin" element={
+            <AdminLogin 
+              pdfs={pdfs} 
+              setPdfs={setPdfs} 
+              activePdfUrl={activePdfUrl} 
+              setActivePdfUrl={setActivePdfUrl} 
+            />
+          } />
+        </Routes>
       </div>
-
-      {/* Responsive PDF Viewer Wrapper */}
-      <div className="pdf-container">
-        <iframe 
-          src={pdfUrl}
-          title="PDF Viewer"
-          width="100%" 
-          height="100%" 
-          style={{ border: 'none', display: 'block' }}
-        />
-      </div>
-
-    </div>
+    </Router>
   );
 }
 
-export default Home;
+export default App;
