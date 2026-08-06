@@ -1,36 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './Home';
 import AdminLogin from './AdminLogin';
 import './App.css'; 
 
 function App() {
-  // Global State for the PDF Repository
-  const [pdfs, setPdfs] = useState([
-    { 
-      id: 1, 
-      name: 'Default Dummy PDF.pdf', 
-      url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' 
-    }
-  ]);
-  
-  // State for which PDF is currently displayed on the Home page
-  const [activePdfUrl, setActivePdfUrl] = useState(pdfs[0].url);
+  const [pdfs, setPdfs] = useState([]);
+  const [activePdfUrl, setActivePdfUrl] = useState("");
+  const [announcements, setAnnouncements] = useState([]);
+
+  // Fetch data from the Node.js backend when the app starts
+  useEffect(() => {
+    // 1. Fetch PDFs
+    fetch('http://localhost:5000/api/pdfs')
+      .then(res => res.json())
+      .then(data => {
+        setPdfs(data);
+        if (data.length > 0) setActivePdfUrl(data[0].url);
+      })
+      .catch(err => console.error("Error fetching PDFs:", err));
+
+    // 2. Fetch Announcements
+    fetch('http://localhost:5000/api/announcements')
+      .then(res => res.json())
+      .then(data => setAnnouncements(data))
+      .catch(err => console.error("Error fetching announcements:", err));
+  }, []);
 
   return (
     <Router>
       <div className="App">
         <Routes>
-          {/* Pass the active URL to the Home page */}
-          <Route path="/" element={<Home activePdfUrl={activePdfUrl} />} />
-          
-          {/* Pass the repository management functions to the Admin page */}
+          <Route path="/" element={<Home activePdfUrl={activePdfUrl} announcements={announcements} />} />
           <Route path="/admin" element={
             <AdminLogin 
               pdfs={pdfs} 
               setPdfs={setPdfs} 
               activePdfUrl={activePdfUrl} 
-              setActivePdfUrl={setActivePdfUrl} 
+              setActivePdfUrl={setActivePdfUrl}
+              announcements={announcements}
+              setAnnouncements={setAnnouncements}
             />
           } />
         </Routes>
