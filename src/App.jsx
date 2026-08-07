@@ -10,9 +10,10 @@ function App() {
   const [announcements, setAnnouncements] = useState([]);
 
   // Fetch data from the Node.js backend when the app starts
+  // Change localhost to your Render URL!
   useEffect(() => {
     // 1. Fetch PDFs
-    fetch('http://localhost:5000/api/pdfs')
+    fetch('https://mission-portal-backend.onrender.com/api/pdfs')
       .then(res => res.json())
       .then(data => {
         setPdfs(data);
@@ -21,11 +22,12 @@ function App() {
       .catch(err => console.error("Error fetching PDFs:", err));
 
     // 2. Fetch Announcements
-    fetch('http://localhost:5000/api/announcements')
+    fetch('https://mission-portal-backend.onrender.com/api/announcements')
       .then(res => res.json())
       .then(data => setAnnouncements(data))
       .catch(err => console.error("Error fetching announcements:", err));
   }, []);
+
 
   return (
     <Router>
