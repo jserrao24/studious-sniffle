@@ -12,8 +12,8 @@ function App() {
   // Fetch data from the Node.js backend when the app starts
   // Change localhost to your Render URL!
   useEffect(() => {
-    // 1. Fetch PDFs
-    fetch('https://mission-portal-backend.onrender.com/api/pdfs')
+    // 1. Fetch PDFs from your live Render server
+    fetch('https://studious-sniffle-x0lh.onrender.com/api/pdfs')
       .then(res => res.json())
       .then(data => {
         setPdfs(data);
@@ -21,8 +21,8 @@ function App() {
       })
       .catch(err => console.error("Error fetching PDFs:", err));
 
-    // 2. Fetch Announcements
-    fetch('https://mission-portal-backend.onrender.com/api/announcements')
+    // 2. Fetch Announcements from your live Render database
+    fetch('https://studious-sniffle-x0lh.onrender.com/api/announcements')
       .then(res => res.json())
       .then(data => setAnnouncements(data))
       .catch(err => console.error("Error fetching announcements:", err));
