@@ -8,7 +8,7 @@ function Home({ activePdfUrl, announcements }) {
       
       {/* Header section */}
       <div className="page-header">
-        <h1>OFP Updates </h1>
+        <h1>1OFP Updates </h1>
         <p className="small">Optimized for unclassified mission support information.</p>
         <Link to="/admin" className="app-link">
           Admin Login &rarr;
