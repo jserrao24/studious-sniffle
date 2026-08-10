@@ -2,50 +2,81 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './Home';
 import AdminLogin from './AdminLogin';
-import './App.css'; 
+import './App.css';
 
 function App() {
   const [pdfs, setPdfs] = useState([]);
-  const [activePdfUrl, setActivePdfUrl] = useState("");
+  const [activePdfUrl, setActivePdfUrl] = useState('');
   const [announcements, setAnnouncements] = useState([]);
 
-  // Fetch data from the Node.js backend when the app starts
-  // Change localhost to your Render URL!
   useEffect(() => {
-    // 1. Fetch PDFs from your live Render server
+    // Fetch PDFs from the live Render backend
     fetch('https://studious-sniffle-x0lh.onrender.com/api/pdfs')
-      .then(res => res.json())
-      .then(data => {
-        setPdfs(data);
-        if (data.length > 0) setActivePdfUrl(data[0].url);
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`PDF API returned ${res.status}`);
+        }
+        return res.json();
       })
-      .catch(err => console.error("Error fetching PDFs:", err));
+      .then((data) => {
+        console.log('PDFs received:', data);
 
-    // 2. Fetch Announcements from your live Render database
+        setPdfs(data);
+
+        if (data.length > 0) {
+          setActivePdfUrl(data[0].url);
+          console.log('Active PDF:', data[0].url);
+        }
+      })
+      .catch((err) => {
+        console.error('Error fetching PDFs:', err);
+      });
+
+    // Fetch announcements from the live Render backend
     fetch('https://studious-sniffle-x0lh.onrender.com/api/announcements')
-      .then(res => res.json())
-      .then(data => setAnnouncements(data))
-      .catch(err => console.error("Error fetching announcements:", err));
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Announcements API returned ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setAnnouncements(data);
+      })
+      .catch((err) => {
+        console.error('Error fetching announcements:', err);
+      });
   }, []);
-
 
   return (
     <Router>
-      <div className="App">
-        <Routes>
-          <Route path="/" element={<Home activePdfUrl={activePdfUrl} announcements={announcements} />} />
-          <Route path="/admin" element={
-            <AdminLogin 
-              pdfs={pdfs} 
-              setPdfs={setPdfs} 
-              activePdfUrl={activePdfUrl} 
+      <Routes>
+
+        <Route
+          path="/"
+          element={
+            <Home
+              activePdfUrl={activePdfUrl}
+              announcements={announcements}
+            />
+          }
+        />
+
+        <Route
+          path="/admin"
+          element={
+            <AdminLogin
+              pdfs={pdfs}
+              setPdfs={setPdfs}
+              activePdfUrl={activePdfUrl}
               setActivePdfUrl={setActivePdfUrl}
               announcements={announcements}
               setAnnouncements={setAnnouncements}
             />
-          } />
-        </Routes>
-      </div>
+          }
+        />
+
+      </Routes>
     </Router>
   );
 }
