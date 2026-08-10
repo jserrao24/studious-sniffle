@@ -14,7 +14,7 @@ function AdminLogin({ pdfs, setPdfs, activePdfUrl, setActivePdfUrl, announcement
   const [editingAnnId, setEditingAnnId] = useState(null);
 
   const TEST_USERNAME = "admin";
-  const TEST_PASSWORD = "navy123"; 
+  const TEST_PASSWORD = "navy123";
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -26,45 +26,59 @@ function AdminLogin({ pdfs, setPdfs, activePdfUrl, setActivePdfUrl, announcement
     }
   };
 
-  // 📂 PDF Functions
-   const handleFileUpload = async (e) => {
+  // 📂 PDF Upload Endpoint
+  const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (file && file.type === "application/pdf") {
       const formData = new FormData();
-      formData.append('pdfFile', file); // This matches the multer configuration on the backend
+      formData.append('pdfFile', file);
 
       try {
-        const response = await fetch('http://localhost:5000/api/pdfs/upload', {
+        const response = await fetch('https://studious-sniffle-x0lh.onrender.com/api/pdfs/upload', {
           method: 'POST',
-          body: formData, // Send the physical file to the server
+          body: formData,
         });
-        
+
         if (response.ok) {
           const newPdf = await response.json();
           setPdfs([...pdfs, newPdf]);
-          setActivePdfUrl(newPdf.url); // Set the newly uploaded PDF as active
+          setActivePdfUrl(newPdf.url);
         }
       } catch (error) {
         console.error("Upload failed:", error);
       }
     }
-    e.target.value = null; 
+    e.target.value = null;
   };
 
+  // 📂 PDF Delete Endpoint
+  const handleDeletePdf = async (idToRemove) => {
+    try {
+      await fetch(`https://studious-sniffle-x0lh.onrender.com/api/pdfs/${idToRemove}`, {
+        method: 'DELETE',
+      });
 
-  const handleDeletePdf = (idToRemove) => {
-    const updatedPdfs = pdfs.filter(pdf => pdf.id !== idToRemove);
-    setPdfs(updatedPdfs);
-    if (pdfs.find(pdf => pdf.id === idToRemove)?.url === activePdfUrl) {
-      setActivePdfUrl(updatedPdfs.length > 0 ? updatedPdfs[0].url : "");
+      const updatedPdfs = pdfs.filter(pdf => pdf.id !== idToRemove);
+      setPdfs(updatedPdfs);
+      if (pdfs.find(pdf => pdf.id === idToRemove)?.url === activePdfUrl) {
+        setActivePdfUrl(updatedPdfs.length > 0 ? updatedPdfs[0].url : "");
+      }
+    } catch (error) {
+      console.error("Failed to delete PDF:", error);
     }
   };
 
-  // 📢 Announcement Functions
-   const handleSaveAnnouncement = async (e) => {
+  // 📢 Announcement Post Endpoint
+  const handleSaveAnnouncement = async (e) => {
     e.preventDefault();
-    if (!editingAnnId) {
-      // Create new announcement via backend API
+    if (editingAnnId) {
+      // Logic for updating an existing announcement would go here (PUT request)
+      // For now, we just update local state and clear the form.
+       setAnnouncements(announcements.map(post =>
+         post.id === editingAnnId ? { ...post, title: annTitle, content: annContent } : post
+       ));
+    } else {
+      // Create a new announcement
       const newAnnData = {
         date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
         title: annTitle,
@@ -72,15 +86,15 @@ function AdminLogin({ pdfs, setPdfs, activePdfUrl, setActivePdfUrl, announcement
       };
 
       try {
-        const response = await fetch('http://localhost:5000/api/announcements', {
+        const response = await fetch('https://studious-sniffle-x0lh.onrender.com/api/announcements', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newAnnData)
         });
-        
+
         if (response.ok) {
           const savedPost = await response.json();
-          setAnnouncements([savedPost, ...announcements]); 
+          setAnnouncements([savedPost, ...announcements]);
         }
       } catch (error) {
         console.error("Failed to save announcement:", error);
@@ -88,6 +102,25 @@ function AdminLogin({ pdfs, setPdfs, activePdfUrl, setActivePdfUrl, announcement
     }
     setAnnTitle('');
     setAnnContent('');
+    setEditingAnnId(null);
+  };
+  
+    // 📢 Announcement Delete Endpoint
+  const handleDeleteAnnouncement = async (idToRemove) => {
+    try {
+      await fetch(`https://studious-sniffle-x0lh.onrender.com/api/announcements/${idToRemove}`, {
+        method: 'DELETE',
+      });
+
+      setAnnouncements(announcements.filter(post => post.id !== idToRemove));
+      if (editingAnnId === idToRemove) {
+        setEditingAnnId(null);
+        setAnnTitle('');
+        setAnnContent('');
+      }
+    } catch (error) {
+      console.error("Failed to delete announcement:", error);
+    }
   };
 
 
@@ -95,15 +128,6 @@ function AdminLogin({ pdfs, setPdfs, activePdfUrl, setActivePdfUrl, announcement
     setAnnTitle(post.title);
     setAnnContent(post.content);
     setEditingAnnId(post.id);
-  };
-
-  const handleDeleteAnnouncement = (idToRemove) => {
-    setAnnouncements(announcements.filter(post => post.id !== idToRemove));
-    if (editingAnnId === idToRemove) {
-      setEditingAnnId(null);
-      setAnnTitle('');
-      setAnnContent('');
-    }
   };
 
   const handleCancelEdit = () => {
@@ -116,7 +140,7 @@ function AdminLogin({ pdfs, setPdfs, activePdfUrl, setActivePdfUrl, announcement
   if (isLoggedIn) {
     return (
       <div style={{ maxWidth: '800px', margin: '40px auto', fontFamily: 'sans-serif' }}>
-        
+
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
           <h2>🛡️ Admin Control Panel</h2>
@@ -165,12 +189,12 @@ function AdminLogin({ pdfs, setPdfs, activePdfUrl, setActivePdfUrl, announcement
           {/* Add / Edit Form */}
           <form onSubmit={handleSaveAnnouncement} style={{ marginBottom: '30px', padding: '15px', backgroundColor: '#f8f9fa', border: '1px solid #dee2e6', borderRadius: '6px' }}>
             <h4 style={{ marginTop: 0 }}>{editingAnnId ? "Edit Announcement" : "Draft New Announcement"}</h4>
-            <input 
+            <input
               type="text" placeholder="Title (e.g. 🛠️ Maintenance Alert)" required
               value={annTitle} onChange={(e) => setAnnTitle(e.target.value)}
               style={{ width: '100%', padding: '10px', marginBottom: '10px', boxSizing: 'border-box' }}
             />
-            <textarea 
+            <textarea
               placeholder="Announcement Content..." required rows="4"
               value={annContent} onChange={(e) => setAnnContent(e.target.value)}
               style={{ width: '100%', padding: '10px', marginBottom: '10px', boxSizing: 'border-box', fontFamily: 'inherit' }}

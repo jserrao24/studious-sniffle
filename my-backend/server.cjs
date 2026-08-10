@@ -95,8 +95,8 @@ app.post('/api/pdfs/upload', upload.single('pdfFile'), (req, res) => {
   if (!req.file) return res.status(400).send('No file uploaded.');
   
   // Use Render's host URL if deployed, otherwise fallback to localhost
-  const host = req.get('host');
-  const protocol = req.protocol;
+const host = req.get('host');
+const protocol = req.headers['x-forwarded-proto'] || req.protocol;
   const newPdf = {
     id: Date.now(),
     name: req.file.originalname,
