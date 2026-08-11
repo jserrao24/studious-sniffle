@@ -6,14 +6,21 @@ const fs = require('fs');
 const { Pool } = require('pg'); // PostgreSQL client
 
 const app = express();
-app.use(cors());
+
+// ✅ **CORS FIX:** Whitelist your live Vercel frontend URL.
+app.use(cors({
+  origin: 'https://studious-sniffle-pi.vercel.app'
+}));
+
 app.use(express.json());
 
-// 🗄️ Database Connection
-// Render automatically provides the 'DATABASE_URL' environment variable when deployed
+// 🗄️ **DATABASE CONNECTION:** Securely connect to the Supabase URL from Render.
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://localhost:5432/postgres', // Fallback to local if running offline
-  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false // Required for secure cloud connections
+  connectionString: process.env.DATABASE_URL,
+  ssl: { 
+    // This tells Node.js to trust the Supabase SSL certificate.
+    rejectUnauthorized: false 
+  }
 });
 
 // Create the announcements table automatically if it doesn't exist
@@ -94,9 +101,8 @@ app.get('/api/pdfs', (req, res) => res.json(pdfs));
 app.post('/api/pdfs/upload', upload.single('pdfFile'), (req, res) => {
   if (!req.file) return res.status(400).send('No file uploaded.');
   
-  // Use Render's host URL if deployed, otherwise fallback to localhost
-const host = req.get('host');
-const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+  const host = req.get('host');
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol;
   const newPdf = {
     id: Date.now(),
     name: req.file.originalname,
@@ -119,3 +125,4 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Backend server running on port ${PORT}`);
 });
+
