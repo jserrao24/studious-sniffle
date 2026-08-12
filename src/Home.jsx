@@ -15,13 +15,13 @@ function Home({ activePdfUrl, announcements }) {
         </Link>
       </div>
 
-      {/* Main Content Area (Now stacked vertically) */}
+      {/* Main Content Area (Vertically Stacked) */}
       <div style={{ 
         display: 'flex', 
-        flexDirection: 'column', // Changed from 'row' to 'column'
+        flexDirection: 'column', 
         flex: 1, 
         width: '95%', 
-        maxWidth: '1200px', // Adjusted max-width for a single column view
+        maxWidth: '1200px', 
         margin: '20px auto', 
         gap: '20px', 
         overflow: 'hidden'
@@ -30,10 +30,9 @@ function Home({ activePdfUrl, announcements }) {
         {/* Top Section: Announcements */}
         {announcements.length > 0 && (
           <div style={{ 
-            // Removed flex: '1' and maxWidth
-            maxHeight: '30vh', // Constrains the announcement section height
-            overflowY: 'auto', // Allows announcements to scroll if they overflow
-            paddingRight: '10px' // Keeps a bit of space for the scrollbar
+            maxHeight: '30vh', 
+            overflowY: 'auto', 
+            paddingRight: '10px' 
           }}>
             <h2 style={{ fontSize: '1.25rem', margin: '0 0 10px 0', borderBottom: '2px solid #dee2e6', paddingBottom: '8px' }}>
               📢 Latest Posts
@@ -54,29 +53,69 @@ function Home({ activePdfUrl, announcements }) {
           </div>
         )}
 
-      {announcements.length === 0 && (
+        {announcements.length === 0 && (
           <div style={{textAlign: 'center'}}>
             <p style={{ color: '#6c757d', fontStyle: 'italic' }}>No new announcements.</p>
           </div>
         )}
 
-        {/* Bottom Section: PDF Viewer */}
+        {/* Bottom Section: PDF Viewer & Controls */}
         <div style={{ 
-          flex: 1, // Changed from flex: '3' to flex: 1 to fill remaining vertical space
+          flex: 1, 
+          display: 'flex',
+          flexDirection: 'column',
           border: '1px solid #dee2e6', 
           borderRadius: '8px', 
           overflow: 'hidden', 
           boxShadow: '0 4px 12px rgba(0,0,0,0.05)', 
           backgroundColor: '#ffffff',
-          minHeight: '400px' // Ensures viewer has a minimum height
+          minHeight: '400px' 
         }}>
+          
+          {/* PDF Control Bar (New!) */}
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            padding: '10px 15px', 
+            backgroundColor: '#f8f9fa', 
+            borderBottom: '1px solid #dee2e6' 
+          }}>
+            <span style={{ fontWeight: 'bold', color: '#495057' }}>📄 Active Document Viewer</span>
+            
+            {/* Download Button */}
+            {activePdfUrl && (
+              <a 
+                href={activePdfUrl} 
+                download 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  textDecoration: 'none',
+                  fontSize: '0.9rem',
+                  fontWeight: 'bold',
+                  boxShadow: '0 2px 4px rgba(0,123,255,0.2)'
+                }}
+              >
+                ⬇️ Download PDF
+              </a>
+            )}
+          </div>
+
+          {/* iframe Viewer */}
           <iframe 
             src={activePdfUrl || ""}
             title="PDF Viewer"
-            width="100%" height="100%" 
-            style={{ border: 'none', display: 'block' }}
+            width="100%" 
+            height="100%" 
+            style={{ flex: 1, border: 'none', display: 'block' }}
           />
         </div>
+
       </div>
     </div>
   );
