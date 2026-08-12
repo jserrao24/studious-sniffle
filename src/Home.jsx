@@ -24,13 +24,14 @@ function Home({ activePdfUrl, announcements }) {
         maxWidth: '1200px', 
         margin: '20px auto', 
         gap: '20px', 
-        overflow: 'hidden'
+        overflowY: 'auto', /* Allows the entire page to scroll if the screen is very small */
+        paddingRight: '5px'
       }}>
         
-        {/* Top Section: Announcements */}
+        {/* Top Section: Larger Announcements Area */}
         {announcements.length > 0 && (
           <div style={{ 
-            maxHeight: '30vh', 
+            maxHeight: '50vh', /* 💡 EXPANDED: Changed from 30vh to 50vh to show way more posts */
             overflowY: 'auto', 
             paddingRight: '10px' 
           }}>
@@ -42,11 +43,11 @@ function Home({ activePdfUrl, announcements }) {
               {announcements.map((post) => (
                 <div key={post.id} style={{
                   backgroundColor: '#ffffff', border: '1px solid #dee2e6',
-                  borderRadius: '6px', padding: '15px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                  borderRadius: '6px', padding: '20px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
                 }}>
                   <span style={{ fontSize: '0.8rem', color: '#6c757d', fontWeight: 'bold' }}>{post.date}</span>
-                  <h3 style={{ margin: '5px 0 10px 0', fontSize: '1.05rem', color: '#282c34' }}>{post.title}</h3>
-                  <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: '1.4', color: '#495057' }}>{post.content}</p>
+                  <h3 style={{ margin: '5px 0 10px 0', fontSize: '1.1rem', color: '#282c34' }}>{post.title}</h3>
+                  <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.5', color: '#495057' }}>{post.content}</p>
                 </div>
               ))}
             </div>
@@ -54,14 +55,14 @@ function Home({ activePdfUrl, announcements }) {
         )}
 
         {announcements.length === 0 && (
-          <div style={{textAlign: 'center'}}>
+          <div style={{textAlign: 'center', margin: '20px 0'}}>
             <p style={{ color: '#6c757d', fontStyle: 'italic' }}>No new announcements.</p>
           </div>
         )}
 
-        {/* Bottom Section: PDF Viewer & Controls */}
+        {/* Bottom Section: Compact, Scrollable PDF Viewer */}
         <div style={{ 
-          flex: 1, 
+          height: '400px', /* 💡 COMPACT: Changed to a fixed height so it acts as a scrollable window */
           display: 'flex',
           flexDirection: 'column',
           border: '1px solid #dee2e6', 
@@ -69,10 +70,10 @@ function Home({ activePdfUrl, announcements }) {
           overflow: 'hidden', 
           boxShadow: '0 4px 12px rgba(0,0,0,0.05)', 
           backgroundColor: '#ffffff',
-          minHeight: '400px' 
+          marginBottom: '20px'
         }}>
           
-          {/* PDF Control Bar (New!) */}
+          {/* PDF Control Bar */}
           <div style={{ 
             display: 'flex', 
             justifyContent: 'space-between', 
@@ -101,7 +102,7 @@ function Home({ activePdfUrl, announcements }) {
                   boxShadow: '0 2px 4px rgba(0,123,255,0.2)'
                 }}
               >
-                ⬇️
+                ⬇️ 
               </a>
             )}
           </div>
