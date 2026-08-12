@@ -4,7 +4,9 @@ import './App.css';
 
 function Home({ activePdfUrl, announcements }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+    // 💡 REMOVED: height: 100vh and overflow: hidden
+    // This allows the page to grow as tall as the content requires
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
       
       {/* Header section */}
       <div className="page-header">
@@ -15,39 +17,32 @@ function Home({ activePdfUrl, announcements }) {
         </Link>
       </div>
 
-      {/* Main Content Area (Vertically Stacked) */}
+      {/* Main Content Area */}
       <div style={{ 
         display: 'flex', 
         flexDirection: 'column', 
-        flex: 1, 
         width: '95%', 
         maxWidth: '1200px', 
-        margin: '20px auto', 
-        gap: '20px', 
-        overflowY: 'auto', /* Allows the entire page to scroll if the screen is very small */
-        paddingRight: '5px'
+        margin: '20px auto 40px auto', // Added bottom margin for spacing
+        gap: '30px' 
       }}>
         
-        {/* Top Section: Larger Announcements Area */}
+        {/* Top Section: Full Announcements List */}
         {announcements.length > 0 && (
-          <div style={{ 
-            maxHeight: '50vh', /* 💡 EXPANDED: Changed from 30vh to 50vh to show way more posts */
-            overflowY: 'auto', 
-            paddingRight: '10px' 
-          }}>
-            <h2 style={{ fontSize: '1.25rem', margin: '0 0 10px 0', borderBottom: '2px solid #dee2e6', paddingBottom: '8px' }}>
+          <div>
+            <h2 style={{ fontSize: '1.25rem', margin: '0 0 15px 0', borderBottom: '2px solid #dee2e6', paddingBottom: '8px' }}>
               📢 Latest Posts
             </h2>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               {announcements.map((post) => (
                 <div key={post.id} style={{
                   backgroundColor: '#ffffff', border: '1px solid #dee2e6',
                   borderRadius: '6px', padding: '20px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
                 }}>
-                  <span style={{ fontSize: '0.8rem', color: '#6c757d', fontWeight: 'bold' }}>{post.date}</span>
-                  <h3 style={{ margin: '5px 0 10px 0', fontSize: '1.1rem', color: '#282c34' }}>{post.title}</h3>
-                  <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.5', color: '#495057' }}>{post.content}</p>
+                  <span style={{ fontSize: '0.85rem', color: '#6c757d', fontWeight: 'bold' }}>{post.date}</span>
+                  <h3 style={{ margin: '8px 0 12px 0', fontSize: '1.15rem', color: '#282c34' }}>{post.title}</h3>
+                  <p style={{ margin: 0, fontSize: '1rem', lineHeight: '1.6', color: '#495057' }}>{post.content}</p>
                 </div>
               ))}
             </div>
@@ -60,17 +55,16 @@ function Home({ activePdfUrl, announcements }) {
           </div>
         )}
 
-        {/* Bottom Section: Compact, Scrollable PDF Viewer */}
+        {/* Bottom Section: Large PDF Viewer */}
         <div style={{ 
-          height: '400px', /* 💡 COMPACT: Changed to a fixed height so it acts as a scrollable window */
+          height: '800px', /* 💡 EXPANDED: Made the viewer much taller so it shows most of the page */
           display: 'flex',
           flexDirection: 'column',
           border: '1px solid #dee2e6', 
           borderRadius: '8px', 
           overflow: 'hidden', 
           boxShadow: '0 4px 12px rgba(0,0,0,0.05)', 
-          backgroundColor: '#ffffff',
-          marginBottom: '20px'
+          backgroundColor: '#ffffff'
         }}>
           
           {/* PDF Control Bar */}
@@ -78,8 +72,8 @@ function Home({ activePdfUrl, announcements }) {
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'center', 
-            padding: '10px 15px', 
-            backgroundColor: '#f8f9fa', 
+            padding: '12px 20px', 
+            backgroundColor: '#e9ecef', 
             borderBottom: '1px solid #dee2e6' 
           }}>
             <span style={{ fontWeight: 'bold', color: '#495057' }}>📄 Active Document Viewer</span>
@@ -94,7 +88,7 @@ function Home({ activePdfUrl, announcements }) {
                 style={{
                   backgroundColor: '#007bff',
                   color: 'white',
-                  padding: '6px 12px',
+                  padding: '8px 16px',
                   borderRadius: '4px',
                   textDecoration: 'none',
                   fontSize: '0.9rem',
@@ -102,7 +96,7 @@ function Home({ activePdfUrl, announcements }) {
                   boxShadow: '0 2px 4px rgba(0,123,255,0.2)'
                 }}
               >
-                ⬇️ 
+                ⬇️ Download PDF
               </a>
             )}
           </div>
