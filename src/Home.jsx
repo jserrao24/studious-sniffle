@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom';
 import './App.css'; 
 
 function Home({ activePdfUrl, announcements }) {
+  // 💡 Slice the array to only get the 3 most recent posts
+  const topAnnouncements = announcements.slice(0, 3);
+
   return (
-    // 💡 REMOVED: height: 100vh and overflow: hidden
-    // This allows the page to grow as tall as the content requires
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
       
       {/* Header section */}
@@ -27,15 +28,15 @@ function Home({ activePdfUrl, announcements }) {
         gap: '30px' 
       }}>
         
-        {/* Top Section: Full Announcements List */}
-        {announcements.length > 0 && (
-          <div>
-            <h2 style={{ fontSize: '1.25rem', margin: '0 0 15px 0', borderBottom: '2px solid #dee2e6', paddingBottom: '8px' }}>
-              📢 Latest Posts
-            </h2>
-            
+        {/* Top Section: Top 3 Announcements */}
+        <div>
+          <h2 style={{ fontSize: '1.25rem', margin: '0 0 15px 0', borderBottom: '2px solid #dee2e6', paddingBottom: '8px' }}>
+            📢 Latest Posts
+          </h2>
+          
+          {topAnnouncements.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {announcements.map((post) => (
+              {topAnnouncements.map((post) => (
                 <div key={post.id} style={{
                   backgroundColor: '#ffffff', border: '1px solid #dee2e6',
                   borderRadius: '6px', padding: '20px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
@@ -46,18 +47,25 @@ function Home({ activePdfUrl, announcements }) {
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+             <div style={{textAlign: 'center', margin: '20px 0'}}>
+               <p style={{ color: '#6c757d', fontStyle: 'italic' }}>No new announcements.</p>
+             </div>
+          )}
 
-        {announcements.length === 0 && (
-          <div style={{textAlign: 'center', margin: '20px 0'}}>
-            <p style={{ color: '#6c757d', fontStyle: 'italic' }}>No new announcements.</p>
-          </div>
-        )}
+          {/* 💡 Link to Archive Page (only shows if there are more than 3 posts) */}
+          {announcements.length > 3 && (
+            <div style={{ textAlign: 'center', marginTop: '25px' }}>
+              <Link to="/archive" style={{ color: '#007bff', textDecoration: 'none', fontWeight: 'bold', fontSize: '1.1rem' }}>
+                View All Announcements &rarr;
+              </Link>
+            </div>
+          )}
+        </div>
 
         {/* Bottom Section: Large PDF Viewer */}
         <div style={{ 
-          height: '800px', /* 💡 EXPANDED: Made the viewer much taller so it shows most of the page */
+          height: '800px',
           display: 'flex',
           flexDirection: 'column',
           border: '1px solid #dee2e6', 
