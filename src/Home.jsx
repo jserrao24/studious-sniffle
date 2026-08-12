@@ -101,7 +101,7 @@ function Home({ activePdfUrl, announcements }) {
                   boxShadow: '0 2px 4px rgba(0,123,255,0.2)'
                 }}
               >
-                ⬇️ Download PDF
+                ⬇️
               </a>
             )}
           </div>
