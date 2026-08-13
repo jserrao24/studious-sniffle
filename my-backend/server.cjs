@@ -86,14 +86,19 @@ app.delete('/api/announcements/:id', async (req, res) => {
   }
 });
 
+
 // --- PDF API ENDPOINTS (CLOUD STORAGE + DATABASE REGISTRY) ---
 
 // GET PDFs from the Neon Database
 app.get('/api/pdfs', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM pdfs ORDER BY id ASC');
-    
-
+    // ✅ **FIX:** Directly send back only the PDFs stored in your database.
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // UPLOAD a PDF to Supabase and save its URL to the Neon Database
 app.post('/api/pdfs/upload', upload.single('pdfFile'), async (req, res) => {
@@ -139,10 +144,9 @@ app.post('/api/pdfs/upload', upload.single('pdfFile'), async (req, res) => {
 // DELETE a PDF record from the Neon Database
 app.delete('/api/pdfs/:id', async (req, res) => {
   const id = parseInt(req.params.id);
-  if (id === 0) return res.status(400).json({ error: "Cannot delete the default PDF." });
-
+  
+  // Note: For a complete system, you would also delete the file from the Supabase bucket here.
   try {
-    // Note: To be perfectly clean, you would also delete the file from the Supabase bucket here.
     await pool.query('DELETE FROM pdfs WHERE id = $1', [id]);
     res.json({ success: true });
   } catch (err) {
