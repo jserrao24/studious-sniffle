@@ -93,18 +93,7 @@ app.get('/api/pdfs', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM pdfs ORDER BY id ASC');
     
-    // Always add the default dummy PDF for demonstration
-    const defaultPdf = { 
-      id: 0, 
-      name: 'Default Dummy PDF.pdf', 
-      url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' 
-    };
-    
-    res.json([defaultPdf, ...result.rows]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+
 
 // UPLOAD a PDF to Supabase and save its URL to the Neon Database
 app.post('/api/pdfs/upload', upload.single('pdfFile'), async (req, res) => {
