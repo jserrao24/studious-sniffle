@@ -18,8 +18,10 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
+// Create BOTH tables automatically if they don't exist
 const initDb = async () => {
   try {
+    // Announcements Table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS announcements (
         id SERIAL PRIMARY KEY,
@@ -28,7 +30,15 @@ const initDb = async () => {
         content TEXT NOT NULL
       );
     `);
-    console.log("Database table verified.");
+    // PDFs Table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS pdfs (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        url TEXT NOT NULL
+      );
+    `);
+    console.log("Database tables verified.");
   } catch (err) {
     console.error("Database initialization error:", err);
   }
@@ -36,21 +46,12 @@ const initDb = async () => {
 initDb();
 
 // ☁️ SUPABASE STORAGE CONFIGURATION
-// These variables will be provided by Render
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Multer is now configured to keep the file in Memory, not on Disk
+// Multer keeps the file in Memory for upload to Supabase
 const upload = multer({ storage: multer.memoryStorage() });
-
-let pdfs = [
-  { 
-    id: 1, 
-    name: 'Default Dummy PDF.pdf', 
-    url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' 
-  }
-];
 
 // --- ANNOUNCEMENT API ENDPOINTS ---
 app.get('/api/announcements', async (req, res) => {
@@ -85,18 +86,35 @@ app.delete('/api/announcements/:id', async (req, res) => {
   }
 });
 
-// --- PDF API ENDPOINTS (CLOUD STORAGE) ---
-app.get('/api/pdfs', (req, res) => res.json(pdfs));
+// --- PDF API ENDPOINTS (CLOUD STORAGE + DATABASE REGISTRY) ---
 
+// GET PDFs from the Neon Database
+app.get('/api/pdfs', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM pdfs ORDER BY id ASC');
+    
+    // Always add the default dummy PDF for demonstration
+    const defaultPdf = { 
+      id: 0, 
+      name: 'Default Dummy PDF.pdf', 
+      url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' 
+    };
+    
+    res.json([defaultPdf, ...result.rows]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// UPLOAD a PDF to Supabase and save its URL to the Neon Database
 app.post('/api/pdfs/upload', upload.single('pdfFile'), async (req, res) => {
   if (!req.file) return res.status(400).send('No file uploaded.');
   
-  // 1. Create a unique filename to prevent overwriting
   const fileName = `${Date.now()}-${req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
 
   try {
-    // 2. Upload the file buffer to Supabase Storage bucket 'pdfs'
-    const { data, error } = await supabase
+    // 1. Upload the physical file to Supabase Storage
+    const { error } = await supabase
       .storage
       .from('pdfs')
       .upload(fileName, req.file.buffer, {
@@ -105,33 +123,44 @@ app.post('/api/pdfs/upload', upload.single('pdfFile'), async (req, res) => {
 
     if (error) throw error;
 
-    // 3. Get the public URL for the newly uploaded file
+    // 2. Get the public URL for the newly uploaded file
     const { data: publicUrlData } = supabase
       .storage
       .from('pdfs')
       .getPublicUrl(fileName);
 
-    const newPdf = {
-      id: Date.now(),
-      name: req.file.originalname,
-      url: publicUrlData.publicUrl 
-    };
-    
-    pdfs.push(newPdf);
-    res.json(newPdf);
+    const fileUrl = publicUrlData.publicUrl;
+    const fileNameDisplay = req.file.originalname;
+
+    // 3. Save the permanent URL into the Neon PostgreSQL Database
+    const result = await pool.query(
+      'INSERT INTO pdfs (name, url) VALUES ($1, $2) RETURNING *',
+      [fileNameDisplay, fileUrl]
+    );
+
+    // 4. Return the new database record to React
+    res.json(result.rows[0]);
 
   } catch (err) {
-    console.error("Supabase upload error:", err);
-    res.status(500).json({ error: 'Failed to upload PDF to cloud storage.' });
+    console.error("Upload error:", err);
+    res.status(500).json({ error: 'Failed to upload PDF and save to registry.' });
   }
 });
 
-app.delete('/api/pdfs/:id', (req, res) => {
-  const idToRemove = parseInt(req.params.id);
-  pdfs = pdfs.filter(pdf => pdf.id !== idToRemove);
-  // Note: For a complete system, you would also delete the file from the Supabase bucket here.
-  res.json({ success: true });
+// DELETE a PDF record from the Neon Database
+app.delete('/api/pdfs/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  if (id === 0) return res.status(400).json({ error: "Cannot delete the default PDF." });
+
+  try {
+    // Note: To be perfectly clean, you would also delete the file from the Supabase bucket here.
+    await pool.query('DELETE FROM pdfs WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
