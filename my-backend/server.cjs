@@ -1,29 +1,23 @@
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const { Pool } = require('pg'); // PostgreSQL client
+const { Pool } = require('pg');
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 
-// ✅ **CORS FIX:** Whitelist your live Vercel frontend URL.
 app.use(cors({
   origin: 'https://studious-sniffle-pi.vercel.app'
 }));
 
 app.use(express.json());
 
-// 🗄️ **DATABASE CONNECTION:** Securely connect to the Supabase URL from Render.
+// 🗄️ DATABASE CONNECTION
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { 
-    // This tells Node.js to trust the Supabase SSL certificate.
-    rejectUnauthorized: false 
-  }
+  ssl: { rejectUnauthorized: false }
 });
 
-// Create the announcements table automatically if it doesn't exist
 const initDb = async () => {
   try {
     await pool.query(`
@@ -41,19 +35,15 @@ const initDb = async () => {
 };
 initDb();
 
-// 📂 Multer Configuration for PDF uploads
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-}
+// ☁️ SUPABASE STORAGE CONFIGURATION
+// These variables will be provided by Render
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
-});
-const upload = multer({ storage });
+// Multer is now configured to keep the file in Memory, not on Disk
+const upload = multer({ storage: multer.memoryStorage() });
 
-// In-Memory Fallback for PDF paths (Simulated Registry)
 let pdfs = [
   { 
     id: 1, 
@@ -62,7 +52,7 @@ let pdfs = [
   }
 ];
 
-// --- ANNOUNCEMENT API ENDPOINTS (CONNECTED TO DATABASE) ---
+// --- ANNOUNCEMENT API ENDPOINTS ---
 app.get('/api/announcements', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM announcements ORDER BY id DESC');
@@ -95,34 +85,55 @@ app.delete('/api/announcements/:id', async (req, res) => {
   }
 });
 
-// --- PDF API ENDPOINTS ---
+// --- PDF API ENDPOINTS (CLOUD STORAGE) ---
 app.get('/api/pdfs', (req, res) => res.json(pdfs));
 
-app.post('/api/pdfs/upload', upload.single('pdfFile'), (req, res) => {
+app.post('/api/pdfs/upload', upload.single('pdfFile'), async (req, res) => {
   if (!req.file) return res.status(400).send('No file uploaded.');
   
-  const host = req.get('host');
-  const protocol = req.headers['x-forwarded-proto'] || req.protocol;
-  const newPdf = {
-    id: Date.now(),
-    name: req.file.originalname,
-    url: `${protocol}://${host}/uploads/${req.file.filename}` 
-  };
-  
-  pdfs.push(newPdf);
-  res.json(newPdf);
+  // 1. Create a unique filename to prevent overwriting
+  const fileName = `${Date.now()}-${req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+
+  try {
+    // 2. Upload the file buffer to Supabase Storage bucket 'pdfs'
+    const { data, error } = await supabase
+      .storage
+      .from('pdfs')
+      .upload(fileName, req.file.buffer, {
+        contentType: 'application/pdf'
+      });
+
+    if (error) throw error;
+
+    // 3. Get the public URL for the newly uploaded file
+    const { data: publicUrlData } = supabase
+      .storage
+      .from('pdfs')
+      .getPublicUrl(fileName);
+
+    const newPdf = {
+      id: Date.now(),
+      name: req.file.originalname,
+      url: publicUrlData.publicUrl 
+    };
+    
+    pdfs.push(newPdf);
+    res.json(newPdf);
+
+  } catch (err) {
+    console.error("Supabase upload error:", err);
+    res.status(500).json({ error: 'Failed to upload PDF to cloud storage.' });
+  }
 });
 
 app.delete('/api/pdfs/:id', (req, res) => {
   const idToRemove = parseInt(req.params.id);
   pdfs = pdfs.filter(pdf => pdf.id !== idToRemove);
+  // Note: For a complete system, you would also delete the file from the Supabase bucket here.
   res.json({ success: true });
 });
-
-app.use('/uploads', express.static(uploadDir));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Backend server running on port ${PORT}`);
 });
-
